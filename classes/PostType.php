@@ -15,6 +15,7 @@ class PostType {
 			'title',
 			'excerpt',
 			'thumbnail',
+			'page-attributes'
 		);
 	}
 
