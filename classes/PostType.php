@@ -9,6 +9,7 @@ class PostType {
 	public $supports;
 	public $excerptTitle;
 	public $excerptHelp;
+	public $customFields=[];
 
 	public function __construct(){
 		$this->supports = array(
@@ -17,6 +18,10 @@ class PostType {
 			'thumbnail',
 			'page-attributes'
 		);
+	}
+
+	public function addCustomField($field){
+		$this->customFields[] = $field;
 	}
 
 	public function create(){
@@ -54,6 +59,62 @@ class PostType {
 		}
 		add_filter('gettext',array($this,'_override_featured_image_title'));
 		add_filter('gettext',array($this,'_override_featured_image_link'));
+		//Custom fields
+		if(!empty($this->customFields)){
+			add_action( 'add_meta_boxes_'.$this->name, array($this,'customFieldAddMetaBoxes') );
+			add_action( 'save_post', array($this,'savePostCustomFields') );
+		}
+	}
+
+	public function savePostCustomFields($post_id){
+		// If this is an autosave, our form has not been submitted, so we don't want to do anything.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+		// Check the user's permissions.
+		if ( isset( $_POST['post_type'] ) && 'page' == $_POST['post_type'] ) {
+			if ( ! current_user_can( 'edit_page', $post_id ) ) {
+				return;
+			}
+
+		} else {
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				return;
+			}
+		}
+		//
+		foreach($this->customFields as $customField){
+			$fieldName = $customField['name'];
+			if (isset( $_POST[$fieldName] ) ) {
+				$postData = implode( "\n", array_map( 'sanitize_text_field', explode( "\n", $_POST[$fieldName] ) ) );
+				update_post_meta( $post_id, $fieldName, $postData );
+			}
+		}
+
+	}
+
+	public function customFieldAddMetaBoxes(){
+		foreach($this->customFields as $customField){
+			switch ($customField['type']) {
+				case 'textarea':
+					$outputCallback = 'customFieldOutputTextArea';
+					break;
+				default:
+					$outputCallback = 'customFieldOutputText';
+					break;
+			}
+			add_meta_box(
+				$customField['name'].'_container',
+				__( $customField['label']),
+				array($this, $outputCallback)
+			);
+		}
+	}
+
+	public function customFieldOutputTextArea($post, $metabox){
+		$fieldName = preg_replace('/_container$/', '', $metabox['id']);
+		$value = get_post_meta( $post->ID, $fieldName, true );
+		echo '<textarea style="width:98%; height:4em;" id="'.$fieldName.'" name="'.$fieldName.'" />'.esc_attr( $value ).'</textarea>';
 	}
 
 	public function _override_post_title_placeholder($input){
