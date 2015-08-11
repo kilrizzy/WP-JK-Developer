@@ -111,6 +111,12 @@ class PostType {
 		}
 	}
 
+	public function customFieldOutputText($post, $metabox){
+		$fieldName = preg_replace('/_container$/', '', $metabox['id']);
+		$value = get_post_meta( $post->ID, $fieldName, true );
+		echo '<input type="text" style="width:98%;" id="'.$fieldName.'" name="'.$fieldName.'" value="'.esc_attr( $value ).'" />';
+	}
+
 	public function customFieldOutputTextArea($post, $metabox){
 		$fieldName = preg_replace('/_container$/', '', $metabox['id']);
 		$value = get_post_meta( $post->ID, $fieldName, true );
