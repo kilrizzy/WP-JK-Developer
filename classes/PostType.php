@@ -9,6 +9,7 @@ class PostType {
 	public $supports;
 	public $excerptTitle;
 	public $excerptHelp;
+	public $iconCSSContent;
 	public $customFields=[];
 
 	public function __construct(){
@@ -27,6 +28,7 @@ class PostType {
 	public function create(){
 		register_post_type($this->name,
 			array(
+				'menu_icon' => '',
 				'labels' => array(
 					'name' => __( $this->labelPlural ),
 					'menu_name' => __( $this->labelPlural ),
@@ -64,6 +66,18 @@ class PostType {
 			add_action( 'add_meta_boxes_'.$this->name, array($this,'customFieldAddMetaBoxes') );
 			add_action( 'save_post', array($this,'savePostCustomFields') );
 		}
+		//Custom icon
+		if(!empty($this->iconCSSContent)){
+			add_action( 'admin_head', array($this,'customMenuIconStyles') );
+		}
+	}
+
+	public function customMenuIconStyles(){
+		echo '<style>';
+		echo '#adminmenu .menu-icon-'.$this->name.' div.wp-menu-image:before {';
+		echo 'content: "'.$this->iconCSSContent.'"';
+		echo '}';
+		echo '</style>';
 	}
 
 	public function savePostCustomFields($post_id){
