@@ -10,7 +10,7 @@ class PostType {
 	public $excerptTitle;
 	public $excerptHelp;
 	public $iconCSSContent;
-	public $customFields=[];
+	public $customFields=array();
 
 	public function __construct(){
 		$this->supports = array(
